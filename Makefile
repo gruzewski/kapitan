@@ -37,6 +37,13 @@ endif
 package:
 	python3 setup.py sdist bdist_wheel
 
+generate_requirements:
+	poetry export -o requirements.txt
+
+.PHONY: build_binary
+build_binary: generate_requirements
+	pyoxidizer build --release
+
 .PHONY: clean
 clean:
 	rm -rf dist/ build/ kapitan.egg-info/ bindist/

@@ -35,4 +35,4 @@ else:
     setup_logging()
 
 # Adding reclass to PYTHONPATH
-sys.path.insert(0, os.path.dirname(__file__) + "/reclass")
+sys.path.insert(0, os.path.dirname("/Users/jacek/Code/kapitan_fork/kapitan") + "/reclass")
