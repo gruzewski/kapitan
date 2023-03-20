@@ -32,6 +32,13 @@ from kapitan.version import DESCRIPTION, PROJECT_NAME, VERSION
 logger = logging.getLogger(__name__)
 
 
+# Patch missing sys.argv[0] which is None for some reason when using PyOxidizer
+# Typer fails on this because it tries to emit the filename
+if sys.argv[0] is None:
+    sys.argv[0] = sys.executable
+    print(f"Patched sys.argv to {sys.argv}")
+
+
 def print_deprecated_secrets_msg(args):
     logger.error("Secrets have been renamed to refs, please refer to: '$ kapitan refs --help'")
     sys.exit(1)

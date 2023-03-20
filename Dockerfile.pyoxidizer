@@ -1,0 +1,40 @@
+# Generate requirements.txt from Poetry config.
+FROM python:slim as requirements
+
+WORKDIR /code
+
+RUN pip install poetry==1.4.0
+COPY pyproject.toml poetry.lock /code/
+RUN poetry export --output requirements.txt
+
+# Compile binary using Pyoxidizer.
+FROM messense/rust-musl-cross:x86_64-musl as compiler
+
+ARG TARGET="x86_64-unknown-linux-musl"
+# ARG TARGET="aarch64-apple-darwin"
+
+WORKDIR /opt/pyoxidizer
+
+ADD https://github.com/indygreg/PyOxidizer/releases/download/pyoxidizer%2F0.24.0/pyoxidizer-0.24.0-${TARGET}.tar.gz /opt/pyoxidizer/pyoxidizer-0.24.0-${TARGET}.tar.gz
+RUN tar xzvf /opt/pyoxidizer/pyoxidizer-0.24.0-${TARGET}.tar.gz
+RUN cp -v /opt/pyoxidizer/pyoxidizer-0.24.0-${TARGET}/pyoxidizer /usr/bin/pyoxidizer && chmod +x /usr/bin/pyoxidizer
+
+RUN rustup target add ${TARGET}
+
+WORKDIR /code
+
+COPY . /code
+
+COPY --from=requirements /code/requirements.txt /code/requirements.txt
+RUN pyoxidizer build --release --verbose --target-triple ${TARGET}
+RUN ls -lahk /code/build/$TARGET/debug/exe/
+
+# Final image.
+FROM scratch
+
+ARG TARGET="x86_64-unknown-linux-musl"
+# ARG TARGET="aarch64-apple-darwin"
+
+COPY --from=compiler /code/build/${TARGET}/debug/exe/kapitan /kapitan
+
+CMD ["/kapitan"] 
